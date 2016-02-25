@@ -29,6 +29,7 @@
   "homepage": "https://github.com/fourlabsldn/Exposer#readme",
   "devDependencies": {
     "grunt": "^0.4.5",
-    "jasmine": "^2.4.1"
+    "jasmine": "^2.4.1",
+    "jasmine-core": "^2.4.1"
   }
 }
