@@ -1,9 +1,9 @@
-function Tester(constructor) {
+function Exposer(constructor) {
   'uses strict';
   consStr = constructor.toString();
 
-  if (!(this instanceof Tester)) {
-    return new Tester(arguments[0]);
+  if (!(this instanceof Exposer)) {
+    return new Exposer(arguments[0]);
   }
 
   this.removeComments = function removeComments(funcStr) {
