@@ -34,17 +34,34 @@ function Exposer() { //jshint ignore:line
   }
 
   function getFunctionName(funcStr, pointer) {
-    var scavange = funcStr.slice(pointer);
+    var isFunctionVariable = false;
+    var funcName = '';
 
-    var searchResult = scavange.match(/\w*\s*\(/);
-    var funcName = (searchResult && searchResult[0]) ? searchResult[0] : '';
-    funcName = funcName.replace(/\s/g, '').replace('(', '');
+    //Check if is  function variable
+    var scavange = funcStr.slice(0, pointer);
+    var searchResult = scavange.match(/\s*\=[\s(]*function$/);
+    if (searchResult && searchResult.length > 0) {
+      isFunctionVariable = true;
 
-    if (funcName === '') {
-      scavange = funcStr.slice(0, pointer);
-      searchResult = scavange.match(/\w*\s*?=\s*?\(?\s*?function$/);
+      //Remove the function keyword and equals sign part
+      scavange = scavange.slice(0, scavange.length - searchResult[0].length);
+
+      //If is an object's property
+      if (scavange.search(/\.[\w\s]+$/) >= 0) {
+        return null;
+      }
+
+      //Get the variable name
+      searchResult = scavange.match(/\w+$/);
       funcName = (searchResult && searchResult[0]) ? searchResult[0] : '';
       funcName = funcName.replace(/\s/g, '').replace(/\s*?=\s*?\(?\s*?function/, '');
+    }
+
+    if (funcName === '' && !isFunctionVariable) {
+      scavange = funcStr.slice(pointer);
+      searchResult = scavange.match(/\w*\s*\(/);
+      funcName = (searchResult && searchResult[0]) ? searchResult[0] : '';
+      funcName = funcName.replace(/\s/g, '').replace('(', '');
     }
 
     return (funcName !== '') ? funcName : null;
