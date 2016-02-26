@@ -1,38 +1,53 @@
-function Exposer(constructor) {
+function Exposer() { //jshint ignore:line
   'uses strict';
-  consStr = constructor.toString();
 
-  if (!(this instanceof Exposer)) {
-    return new Exposer(arguments[0]);
+  if (!(this instanceof Exposer)) { //jshint ignore:line
+    return new Exposer();
   }
 
   this.removeComments = function removeComments(funcStr) {
     return funcStr.replace(/(?:\/\*(?:[\s\S]*?)\*\/)|(?:([\s;])+\/\/(?:.*)$)/gm, ' ');
   };
 
-  function removeModuleWrapping(funcStr) {
-    var cleanFuncStr = funcStr;
+  function getIndexOf(indexOfWhat, funcStr) {
+    if (typeof funcStr !== 'string') {throw 'Invalid paremeter type.'; }
 
-    //Remove header
-    cleanFuncStr = cleanFuncStr.replace(/function\s*?\w*?\((\w|\s|\,)*?\)\s*?\{/, '');
-    cleanFuncStr = cleanFuncStr.replace(/\}\s*$/, '');
+    var idx = null;
+    var match;
 
-    return cleanFuncStr;
+    switch (indexOfWhat) {
+      case 'afterFunctionDeclaration':
+        match = funcStr.match(/function\s*?\w*?\((\w|\s|\,)*?\)\s*?\{/);
+        break;
+      case 'beforeFunctionClosing':
+        match = funcStr.match(/\}\s*$/);
+        break;
+      default:
+        throw 'Invalid option';
+    }
+
+    if (match.length > 0) {
+      idx = match[0].length;
+    }
+
+    return idx;
   }
 
   function getFunctionName(funcStr, pointer) {
     var scavange = funcStr.slice(pointer);
 
-    var funcName = scavange.match(/\w*\s*\(/)[0];
+    var searchResult = scavange.match(/\w*\s*\(/);
+    var funcName = (searchResult && searchResult[0]) ? searchResult[0] : '';
     funcName = funcName.replace(/\s/g, '').replace('(', '');
 
     if (funcName === '') {
       scavange = funcStr.slice(0, pointer);
-      funcName = scavange.match(/\w*\s*?=\s*?\(?\s*?function$/)[0];
+      searchResult = scavange.match(/\w*\s*?=\s*?\(?\s*?function$/);
+      funcName = (searchResult && searchResult[0]) ? searchResult[0] : '';
       funcName = funcName.replace(/\s/g, '').replace(/\s*?=\s*?\(?\s*?function/, '');
     }
 
-    return funcName;
+    return (funcName !== '') ? funcName : null;
   }
 
   function matchingChar(char) {
@@ -50,13 +65,22 @@ function Exposer(constructor) {
       case '"':
         answer = '"';
         break;
+      default:
+        answer = null;
     }
     return answer;
   }
 
-  function getFunctionLength(scavange) {
+  function indexOfMatchingElement(funcString, openingIndex) {
+    if (typeof funcString !== 'string' ||
+        typeof openingIndex !== 'number') {
+      throw 'Invalid paremeter type.';
+    }
+
+    var closingIndex = openingIndex;
+    var scavange = funcString.slice(openingIndex);
+
     var toBeMatched = [];
-    var len = 0;
     var lastMatch;
     var currMatch;
     var idx;
@@ -69,56 +93,79 @@ function Exposer(constructor) {
       if (lastMatch === matchingChar(currMatch) &&
             scavange.charAt(idx - 1) !== '\\') {
         toBeMatched.pop();
-      } else if (lastMatch !== "'" || lastMatch !== '"') {
+      } else if (lastMatch !== '\'' && lastMatch !== '"') {
         toBeMatched.push(currMatch);
       }
 
       scavange = scavange.slice(idx + 1);
-      len += idx + 1;
+      closingIndex += idx + 1;
     } while (toBeMatched.length > 0 && scavange.length > 0 && idx >= 0);
 
     if (toBeMatched.length > 0) {
       throw 'Parsing error';
     }
 
-    return len;
+    return closingIndex;
+  }
+
+  function getFunctionLength(scavange) {
+    if (typeof scavange !== 'string') {throw 'Invalid paremeter type.'; }
+
+    var idx = scavange.search('{');
+    return indexOfMatchingElement(scavange, idx) + 1;
   }
 
   this.getFunctions = function getFunctions(funcStr) {
-    funcStr = funcStr || consStr;
+    if (typeof funcStr !== 'string') {throw 'Invalid paremeter type.'; }
+
     funcStr = this.removeComments(funcStr);
 
     //Isolate module from other code in file
-    var moduleStr = funcStr.slice(0, getFunctionLength(funcStr));
-    var moduleClean = removeModuleWrapping(moduleStr);
+    var moduleStr = funcStr.slice(0, getFunctionLength(funcStr) - 1);
+    var pointer = getIndexOf('afterFunctionDeclaration', moduleStr);
 
     var functions = [];
-    var pointer = 0;
     var cutFrom;
     var FUNCWORDLEN = 'function'.length;
-    var scavange = moduleClean;
+    var scavange = moduleStr.slice(pointer);
+    var funcName;
+    var funcLen;
+    var idx;
 
-    while (pointer < moduleClean.length) {
+    while (pointer < moduleStr.length) {
       // Go to next function
-      idx = scavange.indexOf('function');
-      if (idx < 0) { break; }
+      idx = scavange.search(/(?:\{|\'|\"|function)/);
+      if (idx < 0) {
+        break;
+      } else if (['{', '\'', '"'].indexOf(scavange.charAt(idx)) >= 0) {
+        pointer += indexOfMatchingElement(scavange, idx);
+        scavange = funcStr.slice(pointer);
+      } else {
+        cutFrom = idx + FUNCWORDLEN;
+        pointer += cutFrom;
+        scavange = scavange.slice(cutFrom);
 
-      cutFrom = idx + FUNCWORDLEN;
-      pointer += cutFrom;
-      scavange = scavange.slice(cutFrom);
+        funcName = getFunctionName(moduleStr, pointer);
+        if (funcName) {
+          functions.push(funcName);
+        }
 
-      funcName = getFunctionName(moduleClean, pointer);
-      functions.push(funcName);
-      funcLen = getFunctionLength(scavange);
-      scavange = scavange.slice(funcLen);
-      pointer += funcLen;
+        funcLen = getFunctionLength(scavange);
+        scavange = scavange.slice(funcLen);
+        pointer += funcLen;
+      }
+
     }
 
     return functions;
   };
 
   this.exposeAll = function exposeAll(func) {
-    var funcStr = (func && func.toString) ? func.toString() : consStr;
+    if (typeof func !== 'function') {
+      throw 'Invalid paremeter type. It must be a constructor function';
+    }
+
+    var funcStr = func.toString();
     var closingBracketIdx = funcStr.search(/\}[^\}]*$/);
 
     var functionsExposition = '';
@@ -134,6 +181,7 @@ function Exposer(constructor) {
     var outcome = topPart + functionsExposition + bottomPart;
 
     eval.call(window, outcome);
+    return;
   };
 
   return this;
