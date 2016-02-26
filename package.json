@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "phantomjs jasmine-runner.js test.html"
+    "test": "phantomjs tests/jasmine-runner.js tests/test.html"
   },
   "repository": {
     "type": "git",

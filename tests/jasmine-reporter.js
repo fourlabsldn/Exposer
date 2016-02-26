@@ -52,7 +52,9 @@ var customReporter = (function () {
 
   function icon(word) {
     if (word === 'passed') {
-      return '\xE2\x9C\x93 ';
+      return '✓';
+
+      // return '\xE2\x9C\x93 ';
     } else {
       return 'X';
     }
