@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "phantomjs jasmine-runner.js test.html"
   },
   "repository": {
     "type": "git",
