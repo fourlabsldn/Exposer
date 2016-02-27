@@ -18,14 +18,15 @@ module.exports = function (grunt) {
     jasmine: {
       src: 'src/**/*.js',
       options: {
-        specs: 'tests/**/*_spec.js'
+        specs: 'tests/**/*test.js'
       }
-    }
+    },
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-jscs');
   grunt.loadNpmTasks('grunt-contrib-jasmine');
+  grunt.loadNpmTasks('grunt-phantom-batch-tester');
   grunt.registerTask('default', ['jshint', 'jscs']);
   grunt.registerTask('test', ['jshint', 'jscs', 'jasmine']);
 };
