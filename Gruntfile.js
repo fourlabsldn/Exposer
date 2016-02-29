@@ -18,9 +18,12 @@ module.exports = function (grunt) {
     jasmine: {
       src: 'src/**/*.js',
       options: {
-        specs: 'tests/**/*test.js'
+        specs: 'tests/**/*.js'
       }
     },
+    phantomTester: {
+      all: ['tests/**/*.html']
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -29,4 +32,5 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-phantom-batch-tester');
   grunt.registerTask('default', ['jshint', 'jscs']);
   grunt.registerTask('test', ['jshint', 'jscs', 'jasmine']);
+  grunt.registerTask('test2', ['jshint', 'jscs', 'phantomTester', 'jasmine']);
 };
