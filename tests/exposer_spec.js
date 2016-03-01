@@ -50,11 +50,13 @@ var mockmodule = function MockModule (var1, var2) {
   }
 
   // (function immediateFunctionNotExportable() {
-  //   return objectWithFunction;
+  //   var a = 3;
+  //   var b = 5;
+  //   a += b;
   // }());
 
-  // return this; //for now the return this is breaking the function.
-}
+  return this; //for now the return this is breaking the function.
+};
 
 describe('Exposer module', function () {
   'use strict';
@@ -153,5 +155,10 @@ describe('Exposer module', function () {
       expect(exposedModule._immediateFunctionNotExportable).not.toBeDefined();
       expect(exposedModule.immediateFunctionNotExportable).not.toBeDefined();
     });
+
+    xit('should work even if there is a return statement');
+    xit('should work when the constructor returns an object which does not declare functions inline');
+    xit('should work when the constructor returns an object which declares functions inline');
+    xit('should work with a crazy immediate function not assigned to anything invocation in the constructor');
   });
 });
