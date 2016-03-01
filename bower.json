@@ -1,0 +1,26 @@
+{
+  "name": "private-exposer",
+  "description": "Module to expose private functions of other modules for testing",
+  "main": "src/exposer.js",
+  "authors": [
+    "lazamar @ FourLabs"
+  ],
+  "license": "ISC",
+  "keywords": [
+    "tester",
+    "module",
+    "exposer",
+    "expose",
+    "private",
+    "functions"
+  ],
+  "homepage": "https://github.com/fourlabsldn/Exposer",
+  "moduleType": [],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
