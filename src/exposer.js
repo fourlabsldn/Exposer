@@ -135,7 +135,8 @@ function Exposer() { //jshint ignore:line
   this.getFunctions = function getFunctions(funcStr) {
     if (typeof funcStr !== 'string') {throw 'Invalid paremeter type.'; }
 
-    funcStr = this.removeComments(funcStr);
+    // This must go back to here. It is somewhere else.
+    // funcStr = this.removeComments(funcStr);
 
     //Isolate module from other code in file
     var moduleStr = funcStr.slice(0, getFunctionLength(funcStr) - 1);
@@ -163,13 +164,17 @@ function Exposer() { //jshint ignore:line
         scavange = scavange.slice(cutFrom);
 
         funcName = getFunctionName(moduleStr, pointer);
-        if (funcName) {
-          functions.push(funcName);
-        }
-
         funcLen = getFunctionLength(scavange);
         scavange = scavange.slice(funcLen);
         pointer += funcLen;
+
+        if (funcName) {
+          functions.push({
+            name: funcName,
+            beingIdx: idx,
+            endIdx: pointer
+          });
+        }
       }
 
     }
@@ -183,18 +188,34 @@ function Exposer() { //jshint ignore:line
     }
 
     var funcStr = func.toString();
-    var closingBracketIdx = funcStr.search(/\}[^\}]*$/);
+    funcStr = this.removeComments(funcStr);
+
+    // var closingBracketIdx = funcStr.search(/\}[^\}]*$/);
 
     var functionsExposition = '';
     var functions = this.getFunctions(funcStr);
     var funcName;
-    while (functions.length) {
-      funcName = functions.pop();
+    var i = 0;
+    while (functions[i]) {
+      funcName = functions[i].name;
       functionsExposition += '\n\tthis._' + funcName + ' = ' + funcName + ';';
+      i++;
     }
 
-    var topPart = funcStr.slice(0, closingBracketIdx);
-    var bottomPart = funcStr.slice(closingBracketIdx, funcStr.length);
+    //This code is nasty. Fix this.
+    var endOfLastFunction = functions[functions.length - 1].endIdx;
+    var afterLastFunction = funcStr.slice(endOfLastFunction, funcStr.length).match(/\s*[\;\(\w]/);
+    var insertIndex;
+    if (!afterLastFunction) {
+      insertIndex = endOfLastFunction;
+    } else if (/\s*\w/.test(afterLastFunction[0])) {
+      insertIndex = endOfLastFunction + afterLastFunction[0].length - 1;
+    } else if (/\s*\(/.test(afterLastFunction[0])) {
+      insertIndex = indexOfMatchingElement(funcStr, endOfLastFunction + afterLastFunction[0].length);
+    }
+
+    var topPart = funcStr.slice(0, insertIndex);
+    var bottomPart = funcStr.slice(insertIndex, funcStr.length);
     var outcome = topPart + functionsExposition + bottomPart;
 
     eval.call(window, outcome);
