@@ -3,7 +3,7 @@
 
 Module to expose private functions of a module
 
-# Instalation
+## Instalation
 **Bower**
 ```
 bower install private-exposer
